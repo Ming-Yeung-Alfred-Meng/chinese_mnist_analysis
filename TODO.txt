@@ -1,0 +1,13 @@
+functions for preparation, e.g. loading data
+instantiate different pre-trained models
+create different pre-trained weights
+define hyperparameters
+    different dataset size
+    different number of epochs
+    batch size
+    refer to a3 for reference
+    learning rate? it seems like thre is no point in comparing different learning rate because you always choose a learning rate from the validation curves
+
+fix different parts of the models and fine-tune
+
+
