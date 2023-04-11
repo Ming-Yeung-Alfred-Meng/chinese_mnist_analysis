@@ -1,2 +1,4 @@
 process_dataset.py
 *dataset
+.DS_Store
+*.pyc
