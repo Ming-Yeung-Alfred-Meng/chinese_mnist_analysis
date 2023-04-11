@@ -75,6 +75,16 @@ def losses(history: tf.keras.callbacks.History,
     figure.suptitle(title)
 
 
+"""
+Freeze a number of layers in the model.
+"""
+def freeze(model: tf.keras.Model,
+           number_of_layers_to_freeze: int) -> None:
+        
+    for layer in model.layers[:number_of_layers_to_freeze]:
+        layer.trainable = False
+
+
 # """
 # Return a pre-trained model without the last classification layer.
 # """
