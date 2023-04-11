@@ -44,15 +44,14 @@ def accuracies(history: tf.keras.callbacks.History,
     training_accuracy = history.history['accuracy']
     validation_accuracy = history.history['val_accuracy']
 
-    plt.figure(figsize=figsize)
-    plt.plot(training_accuracy, label='Training Accuracy')
-    plt.plot(validation_accuracy, label='Validation Accuracy')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([min(plt.ylim()),1])
-    plt.title('Training and Validation Accuracy')
-    plt.show()
+    figure, axis = plt.subplots(figsize=figsize)
+    axis.plot(training_accuracy, label='Training Accuracy')
+    axis.plot(validation_accuracy, label='Validation Accuracy')
+    axis.legend()
+    axis.set_xlabel('Epoch')
+    axis.set_ylabel('Accuracy')
+    axis.set_ylim(min(axis.get_ylim()), 1)
+    figure.suptitle('Training and Validation Accuracy')
 
 
 """
@@ -64,15 +63,14 @@ def losses(history: tf.keras.callbacks.History,
     training_loss = history.history['loss']
     validation_loss = history.history['val_loss']
 
-    plt.figure(figsize=figsize)
-    plt.plot(training_loss, label='Training Loss')
-    plt.plot(validation_loss, label='Validation Loss')
-    plt.legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Cross Entropy')
-    plt.ylim([0,1.0])
-    plt.title('Training and Validation Loss')
-    plt.show()
+    figure, axis = plt.subplots(figsize=figsize)
+    axis.plot(training_loss, label='Training Loss')
+    axis.plot(validation_loss, label='Validation Loss')
+    axis.legend()
+    axis.set_xlabel('Epoch')
+    axis.set_ylabel('Cross Entropy')
+    axis.set_ylim(0, max(axis.get_ylim()))
+    figure.suptitle('Training and Validation Loss')
 
 
 # """
