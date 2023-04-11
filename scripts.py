@@ -75,15 +75,15 @@ def process_dataset(input_folder: str,
 Add a classifier to a base model.
 """
 def add_classifier(base_model: tf.keras.Model,
+                   IMAGE_SHAPE: tuple[int, int, int],
                    number_of_classes: int) -> tf.keras.Model:
 
-    output = base_model.output
-    output = tf.keras.layers.Flatten()(output)
-    output = tf.keras.layers.Dense(1024, activation="relu")(output)
-    output = tf.keras.layers.Dropout(0.5)(output)
-    model = tf.keras.Model(input=base_model.input, output=tf.keras.layers.Dense(units=number_of_classes, activation="softmax")(output))
-
-    return model
+    inputs = tf.keras.Input(shape=IMAGE_SHAPE)
+    return tf.keras.Model(input=inputs, output=tf.keras.layers.Dense(units=number_of_classes, activation="softmax")(
+                                               tf.keras.layers.Dropout(0.5)(
+                                               tf.keras.layers.Dense(1024, activation="relu")(
+                                               tf.keras.layers.Flatten()(
+                                               base_model(inputs, training=False))))))
 
 
 """
