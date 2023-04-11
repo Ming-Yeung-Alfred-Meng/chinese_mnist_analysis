@@ -39,6 +39,7 @@ def model(base_model: tf.keras.Model,
 Plot training and validation accuracy.
 """
 def accuracies(history: tf.keras.callbacks.History,
+               title: str,
                figsize: Optional[tuple[int, int]] = None) -> None:
     
     training_accuracy = history.history['accuracy']
@@ -51,13 +52,14 @@ def accuracies(history: tf.keras.callbacks.History,
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Accuracy')
     axis.set_ylim(min(axis.get_ylim()), 1)
-    figure.suptitle('Training and Validation Accuracy')
+    figure.suptitle(title)
 
 
 """
 Plot Training and validation loss.
 """
 def losses(history: tf.keras.callbacks.History,
+           title: str,
            figsize: Optional[tuple[int, int]] = None) -> None:
 
     training_loss = history.history['loss']
@@ -70,7 +72,7 @@ def losses(history: tf.keras.callbacks.History,
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Cross Entropy')
     axis.set_ylim(0, max(axis.get_ylim()))
-    figure.suptitle('Training and Validation Loss')
+    figure.suptitle(title)
 
 
 # """
