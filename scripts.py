@@ -115,10 +115,10 @@ def losses_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     axis.plot([classifier_number_of_epoches - 1, classifier_number_of_epoches - 1],
               axis.get_ylim(), label='Start Fine Tuning')
     axis.legend()
-    figure.suptitle('Training and Validation Loss')
+    figure.suptitle(title)
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Cross Entropy')
-    
+
 
 # """
 # Return a pre-trained model without the last classification layer.
