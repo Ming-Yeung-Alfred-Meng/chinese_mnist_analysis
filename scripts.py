@@ -79,7 +79,7 @@ def add_classifier(base_model: tf.keras.Model,
                    number_of_classes: int) -> tf.keras.Model:
 
     inputs = tf.keras.Input(shape=image_shape)
-    return tf.keras.Model(inputs=inputs, outputs=tf.keras.layers.Dense(units=number_of_classes, activation="softmax")(
+    return tf.keras.Model(inputs=inputs, outputs=tf.keras.layers.Dense(units=number_of_classes)(
                                                  tf.keras.layers.Dropout(0.5)(
                                                  tf.keras.layers.Dense(1024, activation="relu")(
                                                  tf.keras.layers.Flatten()(
