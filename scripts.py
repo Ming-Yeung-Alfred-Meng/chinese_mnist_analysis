@@ -22,20 +22,6 @@ def add_classifier(base_model: tf.keras.Model,
 
 
 """
-Create a model from the base model.
-"""
-def model(base_model: tf.keras.Model,
-          number_of_classes: int,
-          learning_rate) -> tf.keras.Model:
-
-    model = add_classifier(base_model, number_of_classes)
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
-
-    return model
-
-
-"""
 Plot training and validation accuracy.
 """
 def accuracies(history: tf.keras.callbacks.History,
