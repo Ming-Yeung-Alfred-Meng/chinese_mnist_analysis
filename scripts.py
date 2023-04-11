@@ -1,9 +1,74 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import random
+import shutil
 import tensorflow as tf
 import sys
 from typing import Optional
+import pandas as pd
+import cv2
+
+
+def process_dataset(input_folder: str,
+                    output_folder: str) -> None:
+
+    # Define the subfolder names for codes 1 to 11
+    code_subfolder_names = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "hundred", "thousand", "ten thousand", "hundred million"]
+
+    # Define the number of images to sample for each code in each dataset
+    validation_sample_size = 70
+    small_sample_size = 70
+    medium_sample_size = 140
+    large_sample_size = 210
+
+    # Set the random seed
+    random.seed(413)
+
+    # Create the output folders if they don't exist
+    for folder_name in ["small_training_dataset", "medium_training_dataset", "large_training_dataset", "validation_dataset"]:
+        folder_path = os.path.join(output_folder, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+        # Create the subfolders for each code
+        for code_name in code_subfolder_names:
+            code_folder_path = os.path.join(folder_path, code_name)
+            os.makedirs(code_folder_path, exist_ok=True)
+
+    # Get a list of all the input image file paths
+    image_file_paths = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.endswith(".jpg")]
+
+    # Shuffle the list of image file paths
+    random.shuffle(image_file_paths)
+
+    # Split the image file paths by code
+    code_image_paths = {}
+    for image_file_path in image_file_paths:
+        code = os.path.splitext(os.path.basename(image_file_path))[0].split("_")[-1]
+        code = int(code)
+        if code not in code_image_paths:
+            code_image_paths[code] = []
+        code_image_paths[code].append(image_file_path)
+
+    # Sample images for the validation dataset
+    validation_image_paths = []
+    for code, image_paths in code_image_paths.items():
+        validation_image_paths.extend(random.sample(image_paths, validation_sample_size))
+
+    # Move the sampled images to the validation dataset folder
+    for image_path in validation_image_paths:
+        code = os.path.splitext(os.path.basename(image_path))[0].split("_")[-1]
+        code_folder_path = os.path.join(output_folder, "validation_dataset", code_subfolder_names[int(code)-1])
+        shutil.copy(image_path, code_folder_path)
+
+    # Sample images for the training datasets
+    for dataset_name, sample_size in [("small_training_dataset", small_sample_size), ("medium_training_dataset", medium_sample_size), ("large_training_dataset", large_sample_size)]:
+        for code, image_paths in code_image_paths.items():
+            remaining_image_paths = [p for p in image_paths if p not in validation_image_paths]
+            sampled_image_paths = random.sample(remaining_image_paths, sample_size)
+            for image_path in sampled_image_paths:
+                code = os.path.splitext(os.path.basename(image_path))[0].split("_")[-1]
+                code_folder_path = os.path.join(output_folder, dataset_name, code_subfolder_names[int(code)-1])
+                shutil.copy(image_path, code_folder_path)
 
 
 """
@@ -119,6 +184,22 @@ def losses_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Cross Entropy')
 
+
+def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
+    class_names = dataloader.class_names
+
+    plt.figure(figsize=(10, 10))
+    for images, labels in dataloader.take(1):
+        for i in range(9):
+            axis = plt.subplot(3, 3, i + 1)
+            plt.imshow(images[i].numpy().astype("uint8"))
+            plt.title(class_names[labels[i]])
+            plt.axis("off")
+
+    image_batch, label_batch = next(iter(dataloader))
+    print("Image batch shape = {}".format(image_batch.shape))
+    print("Label batch shape = {}".format(label_batch.shape))
+    
 
 # """
 # Return a pre-trained model without the last classification layer.
