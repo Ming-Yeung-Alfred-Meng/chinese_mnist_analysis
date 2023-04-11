@@ -1,0 +1,2 @@
+https://www.kaggle.com/code/ateplyuk/mnist-efficientnet/notebook
+https://www.tensorflow.org/tutorials/images/transfer_learning
