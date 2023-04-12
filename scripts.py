@@ -207,11 +207,11 @@ Train each of the models using each of the dataloaders.
 
 Return the histories and 
 """
-def train_classifier(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
-                     training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
-                     validation_dataloader: tf.data.Dataset,
-                     number_of_epochs: int,
-                     checkpoint_names: list[list[str]]) -> list[list[tf.keras.callbacks.History]]:
+def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
+                      training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
+                      validation_dataloader: tf.data.Dataset,
+                      number_of_epochs: int,
+                      checkpoint_names: list[list[str]]) -> list[list[tf.keras.callbacks.History]]:
 
     assert len(checkpoint_names) == len(models)
     assert len(checkpoint_names[0]) == len(training_dataloaders)
@@ -237,5 +237,8 @@ def train_classifier(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mode
         histories.append(model_histories)
 
     return histories
+
+
+def fine_tune()
 
 
