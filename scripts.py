@@ -186,6 +186,7 @@ def losses_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
 
 
 def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
+
     class_names = dataloader.class_names
 
     plt.figure(figsize=(10, 10))
@@ -201,14 +202,34 @@ def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
     print("Label batch shape = {}".format(label_batch.shape))
     
 
-# """
-# Return a pre-trained model without the last classification layer.
-# """
-# def create_base_model(model_name: str, input_shape: tuple[int, int]) -> tf.keras.Model:
+def train_classifier(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
+                     training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
+                     validation_dataloader: tf.data.Dataset,
+                     number_of_epochs: int,
+                     checkpoint_names: list[list[str]]) -> list[list[tf.keras.callbacks.History]]:
 
-#     if model_name == "efficientnet":
-#         return 
-#     else:
-#         print("The model {} is an invalid base model.".format(model_name))
-#         sys.exit(1)
+    assert len(checkpoint_names) == len(models) * len(training_dataloaders)
+
+    histories = []
+
+    for i in range(len(models)):
+        model_histories = []
+
+        initial_checkpoint_path = os.path.join("./checkpoints/initial_models", "model{}".format(i))
+        models[i].save_weights(initial_checkpoint_path)
+        models[i].layers[1].trainable = False
+
+        for j in range(len(training_dataloaders)):
+            model_histories.append(models[i].fit(training_dataloaders[j],
+                                                 epochs=number_of_epochs,
+                                                 validation_data=validation_dataloader))
+            
+            models[i].save_weights(os.path.join("./checkpoints") + checkpoint_names[i][j])
+            models[i].load_weights(initial_checkpoint_path)
+
+        models[i].layers[1].trainable = True
+        histories.append(model_histories)
+
+    return histories
+
 
