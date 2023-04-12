@@ -202,13 +202,19 @@ def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
     print("Label batch shape = {}".format(label_batch.shape))
     
 
+"""
+Train each of the models using each of the dataloaders.
+
+Return the histories and 
+"""
 def train_classifier(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
                      training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
                      validation_dataloader: tf.data.Dataset,
                      number_of_epochs: int,
                      checkpoint_names: list[list[str]]) -> list[list[tf.keras.callbacks.History]]:
 
-    assert len(checkpoint_names) == len(models) * len(training_dataloaders)
+    assert len(checkpoint_names) == len(models)
+    assert len(checkpoint_names[0]) == len(training_dataloaders)
 
     histories = []
 
