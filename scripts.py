@@ -209,10 +209,10 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
                       training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
                       validation_dataloader: tf.data.Dataset,
                       number_of_epochs: int,
-                      checkpoint_names: list[list[str]]) -> np.ndarray:
+                      checkpoint_names: np.ndarray) -> np.ndarray:
 
-    assert len(checkpoint_names) == len(models)
-    assert len(checkpoint_names[0]) == len(training_dataloaders)
+    assert checkpoint_names.shape[0] == len(models)
+    assert checkpoint_names.shape[1] == len(training_dataloaders)
 
     accuracies = np.empty((len(models), len(training_dataloaders)))
 
@@ -226,7 +226,7 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
                                              epochs=number_of_epochs,
                                              validation_data=validation_dataloader).history['val_accuracy'][-1]
             
-            models[i].save_weights(os.path.join("./checkpoints") + checkpoint_names[i][j])
+            models[i].save_weights(os.path.join("./checkpoints", + checkpoint_names[i, j]))
             models[i].load_weights(initial_checkpoint_path)
 
         models[i].layers[1].trainable = True
@@ -240,26 +240,26 @@ def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
               training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
               validation_dataloader: tf.data.Dataset,
               number_of_epochs: int,
-              checkpoint_names: list[list[str]],
-              percentage_of_fine_tune_layers: list[float]) -> np.array:
+              checkpoint_names: np.ndarray,
+              percentage_of_fine_tune_layers: list[float]) -> np.ndarray:
     
-    accuracies = np.empty()
+    assert checkpoint_names.shape[0] == len(models)
+    assert checkpoint_names.shape[1] == len(training_dataloaders)
+    
+    accuracies = np.empty((len(models), len(training_dataloaders), len(percentage_of_fine_tune_layers)))
 
     for i in range(len(models)):
         for j in range(len(training_dataloaders)):
-            for percentage in percentage_of_fine_tune_layers:
-                models[i].load_weights(os.path.join(...checkpoint_names[i][j]))
+            for k in range(len(percentage_of_fine_tune_layers)):
+                models[i].load_weights(os.path.join("./checkpoints", + checkpoint_names[i, j]))
 
-                freeze(models[i].layers[1], np.floor(len(models[i].layers[1]) * percentage))
+                freeze(models[i].layers[1], np.floor(len(models[i].layers[1]) * percentage_of_fine_tune_layers[k]))
 
-                history = models[i].fit(training_dataloaders[j],
-                                        epochs=number_of_epochs,
-                                        validation_data=validation_dataloader)
+                accuracies[i, j, k] = models[i].fit(training_dataloaders[j],
+                                           epochs=number_of_epochs,
+                                           validation_data=validation_dataloader).history['val_accuracy'][-1]
 
-                # store final accuracy
                 models[i].layers[1].trainable = True
-
-        histories.append(model_histories)
 
     return accuracies
 
