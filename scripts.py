@@ -1,13 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import shutil
 import random
 import shutil
 import tensorflow as tf
-import sys
 from typing import Optional
-import pandas as pd
-import cv2
 
 
 def process_dataset(input_folder: str,
@@ -205,40 +203,64 @@ def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
 """
 Train each of the models using each of the dataloaders.
 
-Return the histories and 
+Return the final accuracies after each training.
 """
 def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
                       training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
                       validation_dataloader: tf.data.Dataset,
                       number_of_epochs: int,
-                      checkpoint_names: list[list[str]]) -> list[list[tf.keras.callbacks.History]]:
+                      checkpoint_names: list[list[str]]) -> np.ndarray:
 
     assert len(checkpoint_names) == len(models)
     assert len(checkpoint_names[0]) == len(training_dataloaders)
 
-    histories = []
+    accuracies = np.empty((len(models), len(training_dataloaders)))
 
     for i in range(len(models)):
-        model_histories = []
-
-        initial_checkpoint_path = os.path.join("./checkpoints/initial_models", "model{}".format(i))
+        initial_checkpoint_path = "./checkpoints/initial_models/model{}".format(i)
         models[i].save_weights(initial_checkpoint_path)
         models[i].layers[1].trainable = False
 
         for j in range(len(training_dataloaders)):
-            model_histories.append(models[i].fit(training_dataloaders[j],
-                                                 epochs=number_of_epochs,
-                                                 validation_data=validation_dataloader))
+            accuracies[i, j] = models[i].fit(training_dataloaders[j],
+                                             epochs=number_of_epochs,
+                                             validation_data=validation_dataloader).history['val_accuracy'][-1]
             
             models[i].save_weights(os.path.join("./checkpoints") + checkpoint_names[i][j])
             models[i].load_weights(initial_checkpoint_path)
 
         models[i].layers[1].trainable = True
+
+    shutil.rmtree("./checkpoints/initial_models")
+
+    return accuracies
+
+
+def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
+              training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
+              validation_dataloader: tf.data.Dataset,
+              number_of_epochs: int,
+              checkpoint_names: list[list[str]],
+              percentage_of_fine_tune_layers: list[float]) -> np.array:
+    
+    accuracies = np.empty()
+
+    for i in range(len(models)):
+        for j in range(len(training_dataloaders)):
+            for percentage in percentage_of_fine_tune_layers:
+                models[i].load_weights(os.path.join(...checkpoint_names[i][j]))
+
+                freeze(models[i].layers[1], np.floor(len(models[i].layers[1]) * percentage))
+
+                history = models[i].fit(training_dataloaders[j],
+                                        epochs=number_of_epochs,
+                                        validation_data=validation_dataloader)
+
+                # store final accuracy
+                models[i].layers[1].trainable = True
+
         histories.append(model_histories)
 
-    return histories
-
-
-def fine_tune()
+    return accuracies
 
 
