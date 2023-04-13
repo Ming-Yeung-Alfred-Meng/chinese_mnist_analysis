@@ -219,6 +219,8 @@ Return the final accuracies after each training.
 def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
                       training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
                       validation_dataloader: tf.data.Dataset,
+                      optimizer: tf.keras.optimizers.Optimizer, 
+                      loss: tf.keras.losses.Loss,
                       number_of_epochs: int,
                       checkpoint_names: np.ndarray) -> np.ndarray:
 
@@ -231,18 +233,14 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
         initial_checkpoint_path = "./checkpoints/initial_models/model{}".format(i)
         models[i].save_weights(initial_checkpoint_path)
         models[i].layers[1].trainable = False
-        # TODO: compile model.
 
         for j in range(len(training_dataloaders)):
-            accuracies[i, j] = models[i].fit(training_dataloaders[j],
-                                             epochs=number_of_epochs,
-                                             validation_data=validation_dataloader).history['val_accuracy'][-1]
+            accuracies[i, j] = train(models[i], training_dataloaders[j], validation_dataloader, optimizer, loss, number_of_epochs).history['val_accuracy'][-1]
             
             models[i].save_weights(os.path.join("./checkpoints", + checkpoint_names[i, j]))
             models[i].load_weights(initial_checkpoint_path)
 
         models[i].layers[1].trainable = True
-        # TODO: compile model.
 
     shutil.rmtree("./checkpoints/initial_models")
 
@@ -252,6 +250,8 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
 def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
               training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
               validation_dataloader: tf.data.Dataset,
+              optimizer: tf.keras.optimizers.Optimizer, 
+              loss: tf.keras.losses.Loss,
               number_of_epochs: int,
               checkpoint_names: np.ndarray,
               percentage_of_fine_tune_layers: list[float]) -> np.ndarray:
@@ -267,14 +267,10 @@ def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
                 models[i].load_weights(os.path.join("./checkpoints", + checkpoint_names[i, j]))
 
                 freeze(models[i].layers[1], np.floor(len(models[i].layers[1]) * percentage_of_fine_tune_layers[k]))
-                # TODO: compile model.
 
-                accuracies[i, j, k] = models[i].fit(training_dataloaders[j],
-                                           epochs=number_of_epochs,
-                                           validation_data=validation_dataloader).history['val_accuracy'][-1]
+                accuracies[i, j, k] = train(models[i], training_dataloaders[j], validation_dataloader, optimizer, loss, number_of_epochs).history['val_accuracy'][-1]
 
                 models[i].layers[1].trainable = True
-                # TODO: compile model.
 
     return accuracies
 
