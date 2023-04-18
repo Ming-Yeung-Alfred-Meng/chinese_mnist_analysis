@@ -264,6 +264,7 @@ def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.ker
     for i in range(checkpoint_names.shape[0]):
         for j in range(checkpoint_names.shape[1]):
             for k in range(len(percentage_of_fine_tune_layers)):
+                tf.keras.backend.clear_session()
                 model = tf.keras.models.load_model(os.path.join("./saved_models", checkpoint_names[i, j]))
 
                 model.layers[1].trainable = True
