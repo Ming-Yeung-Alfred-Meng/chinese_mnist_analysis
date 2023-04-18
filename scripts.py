@@ -3,7 +3,6 @@ import numpy as np
 import os
 import shutil
 import random
-import shutil
 import tensorflow as tf
 from typing import Type, Optional
 
