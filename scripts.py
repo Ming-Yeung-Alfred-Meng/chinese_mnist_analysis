@@ -248,8 +248,7 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
     return accuracies
 
 
-def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
-              optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer]],
+def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer]],
               training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
               validation_dataloader: tf.data.Dataset,
               learning_rate: float,
@@ -258,21 +257,20 @@ def fine_tune(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
               checkpoint_names: np.ndarray,
               percentage_of_fine_tune_layers: list[float]) -> np.ndarray:
     
-    assert checkpoint_names.shape[0] == len(models)
     assert checkpoint_names.shape[1] == len(training_dataloaders)
     
-    accuracies = np.empty((len(models), len(training_dataloaders), len(percentage_of_fine_tune_layers)))
+    accuracies = np.empty((checkpoint_names.shape[0], len(training_dataloaders), len(percentage_of_fine_tune_layers)))
 
-    for i in range(len(models)):
-        for j in range(len(training_dataloaders)):
+    for i in range(checkpoint_names.shape[0]):
+        for j in range(checkpoint_names.shape[1]):
             for k in range(len(percentage_of_fine_tune_layers)):
-                models[i].load_weights(os.path.join("./checkpoints", checkpoint_names[i, j]))
+                model = tf.keras.models.load_model(os.path.join("./saved_models", checkpoint_names[i, j]))
 
-                models[i].trainable = True
-                freeze(models[i].layers[1], int(np.floor(len(models[i].layers[1].layers) * percentage_of_fine_tune_layers[k])))
-                models[i].compile(optimizer=optimizers[i](learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
+                model.layers[1].trainable = True
+                freeze(model.layers[1], int(np.floor(len(model.layers[1].layers) * percentage_of_fine_tune_layers[k])))
+                model.compile(optimizer=optimizers[i](learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
                 
-                accuracies[i, j, k] = models[i].fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
+                accuracies[i, j, k] = model.fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
 
     return accuracies
 
