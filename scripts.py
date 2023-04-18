@@ -231,7 +231,7 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
 
     for i in range(len(models)):
 
-        initial_checkpoint_path = "./checkpoints/initial_models/model{}".format(i)
+        initial_checkpoint_path = "./checkpoints/initial_model{}".format(i)
         models[i].save_weights(initial_checkpoint_path)
         models[i].layers[1].trainable = False
         models[i].compile(optimizer=optimizers[i](learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
@@ -240,10 +240,10 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
         for j in range(len(training_dataloaders)):
             accuracies[i, j] = models[i].fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
             
-            models[i].save_weights(os.path.join("./checkpoints", checkpoint_names[i, j]))
+            models[i].save(os.path.join("./saved_models", checkpoint_names[i, j]))
             models[i].load_weights(initial_checkpoint_path)
 
-    shutil.rmtree("./checkpoints/initial_models")
+    shutil.rmtree("./checkpoints")
 
     return accuracies
 
