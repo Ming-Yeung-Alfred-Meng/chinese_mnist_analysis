@@ -5,6 +5,7 @@ import shutil
 import random
 import tensorflow as tf
 from typing import Type, Optional
+import gc
 
 
 def process_dataset(input_folder: str,
@@ -273,6 +274,7 @@ def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.ker
                 
                 accuracies[i, j, k] = model.fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
 
+            gc.collect()
     return accuracies
 
 
