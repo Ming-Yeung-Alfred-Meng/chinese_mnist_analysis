@@ -275,8 +275,8 @@ def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.ker
                 accuracies[i, j, k] = model.fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
 
                 del model
+                gc.collect()
                 
-            gc.collect()
     return accuracies
 
 
