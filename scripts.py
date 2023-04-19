@@ -338,7 +338,9 @@ def train_classifer(model: tf.keras.Model,
                   loss=loss(from_logits=from_logits),
                   metrics=metrics)
 
-    return model.fit(training_dataloader, epochs=number_of_epochs, validation_data=validation_dataloader)
+    return model.fit(training_dataloader,
+                     epochs=number_of_epochs,
+                     validation_data=validation_dataloader)
 
 
 def fine_tune(model: tf.keras.Model,
@@ -356,7 +358,7 @@ def fine_tune(model: tf.keras.Model,
     assert(number_of_layers_to_freeze >= 0)
 
     model.layers[1].trainable = True
-    
+
     print("Number of trainable parameters after unfreezing the entire base model: {}".format(int(sum(tf.keras.backend.count_params(p) for p in model.trainable_variables))))
 
     for layer in model.layers[1].layers[:number_of_layers_to_freeze]:
