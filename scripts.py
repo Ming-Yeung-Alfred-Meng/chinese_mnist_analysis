@@ -284,14 +284,14 @@ def fine_tune_one_model(optimizer: Type[tf.keras.optimizers.Optimizer],
     accuracies[i, j, k] = model.fit(training_dataloader, epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
 
 
-def fine_tune(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
-              training_dataloaders: list[tf.data.Dataset],
-              validation_dataloader: tf.data.Dataset,
-              learning_rate: float,
-              loss: tf.keras.losses.Loss,
-              number_of_epochs: int,
-              checkpoint_names: np.ndarray,
-              percentage_of_fine_tune_layers: list[float]) -> np.ndarray:
+def fine_tune_models(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
+                     training_dataloaders: list[tf.data.Dataset],
+                     validation_dataloader: tf.data.Dataset,
+                     learning_rate: float,
+                     loss: tf.keras.losses.Loss,
+                     number_of_epochs: int,
+                     checkpoint_names: np.ndarray,
+                     percentage_of_fine_tune_layers: list[float]) -> np.ndarray:
     
     assert checkpoint_names.shape[1] == len(training_dataloaders)
     
@@ -315,5 +315,4 @@ def fine_tune(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
                 process.join()    
 
     return accuracies
-
 
