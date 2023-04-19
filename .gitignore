@@ -3,3 +3,4 @@ process_dataset.py
 .DS_Store
 *.pyc
 checkpoints/
+scratch.txt
