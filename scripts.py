@@ -316,3 +316,9 @@ def fine_tune_models(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
 
     return accuracies
 
+
+def train_classifer() -> tf.keras.callbacks.History:
+    # freeze the base model
+    # compile the model
+    # train the model
+    # return the history
