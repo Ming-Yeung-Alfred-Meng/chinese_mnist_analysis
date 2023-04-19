@@ -317,7 +317,7 @@ def fine_tune_models(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
     return accuracies
 
 
-def train_classifer(model: tf.keras.Model,
+def train_classifier(model: tf.keras.Model,
                     training_dataloader: tf.data.Dataset,
                     validation_dataloader: tf.data.Dataset,
                     number_of_epochs: int,
