@@ -317,8 +317,19 @@ def fine_tune_models(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
     return accuracies
 
 
-def train_classifer() -> tf.keras.callbacks.History:
-    # freeze the base model
-    # compile the model
-    # train the model
-    # return the history
+def train_classifer(model: tf.keras.Model,
+                    training_dataloader: tf.data.Dataset,
+                    validation_dataloader: tf.data.Dataset,
+                    number_of_epochs: int,
+                    optimizer: Type[tf.keras.optimizers.Optimizer],
+                    learning_rate: float,
+                    loss: Type[tf.keras.losses.Loss],
+                    from_logits: bool,
+                    metrics: list[str]) -> tf.keras.callbacks.History:
+
+    model.layers[1].trainable = False
+    assert(int(sum(tf.keras.backend.count_params(p) for p in model.trainable_variables)) == 5259279)
+
+    model.compile(optimizer=optimizer(learning_rate=learning_rate), loss=loss(from_logits=from_logits), metrics=metrics)
+
+    return model.fit(training_dataloader, epochs=number_of_epochs, validation_data=validation_dataloader)
