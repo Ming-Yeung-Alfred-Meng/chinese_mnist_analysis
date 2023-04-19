@@ -5,6 +5,7 @@ import shutil
 import random
 import tensorflow as tf
 from typing import Type, Optional
+import multiprocessing
 import gc
 
 
@@ -211,14 +212,22 @@ def train(model: tf.keras.Model,
     model.compile(optimizer=optimizer(learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
     return model.fit(training_dataloader, epochs=number_of_epochs, validation_data=validation_dataloader)
 
+
+def train_one_classifier(shared_dictionary) -> None:
+
+    shared_dictionary["validation_accuracy"] = shared_dictionary["model"].fit(shared_dictionary["training_dataloaders"],
+                                                                              epochs=shared_dictionary["number_of_epochs"],
+                                                                              validation_data=shared_dictionary["validation_dataloader"]).history['val_accuracy'][-1]
+
+
 """
 Train each of the models using each of the dataloaders.
 
 Return the final accuracies after each training.
 """
-def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Model],
-                      optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer]],
-                      training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
+def train_classifiers(models: list[tf.keras.Model],
+                      optimizers: list[Type[tf.keras.optimizers.Optimizer]],
+                      training_dataloaders: list[tf.data.Dataset],
                       validation_dataloader: tf.data.Dataset,
                       learning_rate: float,
                       loss: tf.keras.losses.Loss,
@@ -228,29 +237,55 @@ def train_classifiers(models: tuple[tf.keras.Model, tf.keras.Model, tf.keras.Mod
     assert checkpoint_names.shape[0] == len(models)
     assert checkpoint_names.shape[1] == len(training_dataloaders)
 
-    accuracies = np.empty((len(models), len(training_dataloaders)))
+    accuracies = np.zeros((len(models), len(training_dataloaders)))
+    manager = multiprocessing.Manager()
+    shared_dictionary = manager.dict()
 
     for i in range(len(models)):
-
-        initial_checkpoint_path = "./checkpoints/initial_model{}".format(i)
-        models[i].save_weights(initial_checkpoint_path)
         models[i].layers[1].trainable = False
         models[i].compile(optimizer=optimizers[i](learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
         assert(int(sum(tf.keras.backend.count_params(p) for p in models[i].trainable_variables)) == 5259279)
 
-        for j in range(len(training_dataloaders)):
-            accuracies[i, j] = models[i].fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
-            
-            models[i].save(os.path.join("./saved_models", checkpoint_names[i, j]))
-            models[i].load_weights(initial_checkpoint_path)
+        shared_dictionary["model"] = models[i]
+        shared_dictionary["validation_dataloader"] = validation_dataloader
+        shared_dictionary["number_of_epochs"] = number_of_epochs
 
-    shutil.rmtree("./checkpoints")
+        for j in range(len(training_dataloaders)):
+            shared_dictionary["training_dataloaders"] = training_dataloaders[j]
+
+            process = multiprocessing.Process(target=train_one_classifier, args=(shared_dictionary))
+            process.start()
+            process.join()
+
+            accuracies[i, j] = shared_dictionary["validation_accuracy"]
+            shared_dictionary["model"].save(os.path.join("./saved_models", checkpoint_names[i, j]))
 
     return accuracies
 
 
-def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer], Type[tf.keras.optimizers.Optimizer]],
-              training_dataloaders: tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset],
+def fine_tune_one_model(optimizer: Type[tf.keras.optimizers.Optimizer],
+                        training_dataloader: tf.data.Dataset,
+                        validation_dataloader: tf.data.Dataset,
+                        learning_rate: float,
+                        loss: tf.keras.losses.Loss,
+                        number_of_epochs: int,
+                        checkpoint_name: str,
+                        percentage_of_fine_tune_layers: float,
+                        accuracies: np.ndarray,
+                        i: int, j: int, k: int) -> None:
+    
+    tf.keras.backend.clear_session()
+    model = tf.keras.models.load_model(os.path.join("./saved_models", checkpoint_name))
+
+    model.layers[1].trainable = True
+    freeze(model.layers[1], int(np.floor(len(model.layers[1].layers) * percentage_of_fine_tune_layers)))
+    model.compile(optimizer=optimizer(learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
+    
+    accuracies[i, j, k] = model.fit(training_dataloader, epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
+
+
+def fine_tune(optimizers: list[Type[tf.keras.optimizers.Optimizer]],
+              training_dataloaders: list[tf.data.Dataset],
               validation_dataloader: tf.data.Dataset,
               learning_rate: float,
               loss: tf.keras.losses.Loss,
@@ -265,18 +300,20 @@ def fine_tune(optimizers: tuple[Type[tf.keras.optimizers.Optimizer], Type[tf.ker
     for i in range(checkpoint_names.shape[0]):
         for j in range(checkpoint_names.shape[1]):
             for k in range(len(percentage_of_fine_tune_layers)):
-                tf.keras.backend.clear_session()
-                model = tf.keras.models.load_model(os.path.join("./saved_models", checkpoint_names[i, j]))
 
-                model.layers[1].trainable = True
-                freeze(model.layers[1], int(np.floor(len(model.layers[1].layers) * percentage_of_fine_tune_layers[k])))
-                model.compile(optimizer=optimizers[i](learning_rate=learning_rate), loss=loss, metrics=['accuracy'])
-                
-                accuracies[i, j, k] = model.fit(training_dataloaders[j], epochs=number_of_epochs, validation_data=validation_dataloader).history['val_accuracy'][-1]
+                process = Process(target=fine_tune_one_model, args=(optimizers[i],
+                                                                    training_dataloaders[j],
+                                                                    validation_dataloader,
+                                                                    learning_rate,
+                                                                    loss,
+                                                                    number_of_epochs,
+                                                                    checkpoint_names[i, j],
+                                                                    percentage_of_fine_tune_layers[k],
+                                                                    accuracies,
+                                                                    i, j, k))
+                process.start()
+                process.join()    
 
-                del model
-                gc.collect()
-                
     return accuracies
 
 
