@@ -343,25 +343,32 @@ def train_classifer(model: tf.keras.Model,
 
 def fine_tune(model: tf.keras.Model,
               number_of_layers_to_freeze: int,
+              classifier_training_history: tf.keras.callbacks.History,
               training_dataloader: tf.data.Dataset,
               validation_dataloader: tf.data.Dataset,
-              number_of_epochs: int,
+              total_number_of_epochs: int,
               optimizer: Type[tf.keras.optimizers.Optimizer],
               learning_rate: float,
               loss: Type[tf.keras.losses.Loss],
               from_logits: bool,
               metrics: list[str]) -> tf.keras.callbacks.History:
-    # unfreeze all base model layers
-    # freeze a number of base model layers
-    # compile
-    # train
-    # return history
+
     assert(number_of_layers_to_freeze >= 0)
 
     model.layers[1].trainable = True
-    print("Number of ")
+    
+    print("Number of trainable parameters after unfreezing the entire base model: {}".format(int(sum(tf.keras.backend.count_params(p) for p in model.trainable_variables))))
 
     for layer in model.layers[1].layers[:number_of_layers_to_freeze]:
         layer.trainable = False
 
-    print("")
+    print("Number of trainable parameters after freezing the first {} layers of the base model: {}".format(number_of_layers_to_freeze, int(sum(tf.keras.backend.count_params(p) for p in model.trainable_variables))))
+
+    model.compile(optimizer=optimizer(learning_rate=learning_rate), 
+                  loss=loss(from_logits=from_logits),
+                  metrics=metrics)
+    
+    return model.fit(training_dataloader,
+                     epochs=total_number_of_epochs,
+                     initial_epoch=classifier_training_history.epoch[-1],
+                     validation_data=validation_dataloader)
