@@ -4,3 +4,4 @@ process_dataset.py
 *.pyc
 checkpoints/
 scratch.txt
+images/
