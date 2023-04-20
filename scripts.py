@@ -159,6 +159,26 @@ def accuracies_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     figure.suptitle(title)
 
 
+def accuracies_of_all_models_after_fine_tuning(classifier_histories: list[tf.keras.callbacks.History],
+                                               fine_tuning_histories: list[tf.keras.callbacks.History],
+                                               curve_labels: list[str],
+                                               classifier_number_of_epoches: int,
+                                               title: str,
+                                               figsize: Optional[tuple[int, int]] = None) -> None:
+    figure, axis = plt.subplots(figsize=figsize)
+
+    for i in range(len(curve_labels)):
+        axis.plot(classifier_histories[i].history['val_accuracy'] + fine_tuning_histories[i].history['val_accuracy'], label=curve_labels[i])
+
+    axis.set_ylim(0.8, 1)
+    axis.plot([classifier_number_of_epoches - 1, classifier_number_of_epoches - 1],
+              axis.get_ylim(), label='Start Fine Tuning')
+    axis.set_xlabel('Epoch')
+    axis.set_ylabel('Accuracy')
+    axis.legend()
+    figure.suptitle(title)
+
+
 """
 Plot losses after fine-tuning.
 """
@@ -184,19 +204,16 @@ def losses_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     axis.set_ylabel('Cross Entropy')
 
 
-"""
-Plot losses after fine-tuning.
-"""
-def validation_losses_of_all_models_after_fine_tuning(classifier_history: list[tf.keras.callbacks.History],
-                                                        fine_tuning_history: list[tf.keras.callbacks.History],
-                                                        curve_names: list[str],
-                                                        classifier_number_of_epoches: int,
-                                                        title: str,
-                                                        figsize: Optional[tuple[int, int]] = None) -> None:
+def validation_losses_of_all_models_after_fine_tuning(classifier_histories: list[tf.keras.callbacks.History],
+                                                      fine_tuning_histories: list[tf.keras.callbacks.History],
+                                                      curve_names: list[str],
+                                                      classifier_number_of_epoches: int,
+                                                      title: str,
+                                                      figsize: Optional[tuple[int, int]] = None) -> None:
     figure, axis = plt.subplots(figsize=figsize)
 
     for i in range(len(curve_names)):
-        axis.plot(classifier_history[i].history['val_loss'] + fine_tuning_history[i].history['val_loss'], label=curve_names[i])
+        axis.plot(classifier_histories[i].history['val_loss'] + fine_tuning_histories[i].history['val_loss'], label=curve_names[i])
 
     axis.set_ylim(0, 1.0)
 
