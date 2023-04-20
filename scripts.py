@@ -6,7 +6,11 @@ import random
 import tensorflow as tf
 from typing import Type, Optional
 import multiprocessing
-import gc
+
+# Disclaimer: contain directly copied or modified code from:
+#   1. ChatGPT (23 Mar)
+#   2. https://www.tensorflow.org/tutorials/images/transfer_learning
+#   3. https://www.kaggle.com/code/ateplyuk/mnist-efficientnet/notebook
 
 
 def process_dataset(input_folder: str,
@@ -159,12 +163,12 @@ def accuracies_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     figure.suptitle(title)
 
 
-def accuracies_of_all_models_after_fine_tuning(classifier_histories: list[tf.keras.callbacks.History],
-                                               fine_tuning_histories: list[tf.keras.callbacks.History],
-                                               curve_labels: list[str],
-                                               classifier_number_of_epoches: int,
-                                               title: str,
-                                               figsize: Optional[tuple[int, int]] = None) -> None:
+def validation_accuracies_of_all_models_after_fine_tuning(classifier_histories: list[tf.keras.callbacks.History],
+                                                          fine_tuning_histories: list[tf.keras.callbacks.History],
+                                                          curve_labels: list[str],
+                                                          classifier_number_of_epoches: int,
+                                                          title: str,
+                                                          figsize: Optional[tuple[int, int]] = None) -> None:
     figure, axis = plt.subplots(figsize=figsize)
 
     for i in range(len(curve_labels)):
@@ -176,7 +180,7 @@ def accuracies_of_all_models_after_fine_tuning(classifier_histories: list[tf.ker
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Accuracy')
     axis.legend()
-    figure.suptitle(title)
+    # figure.suptitle(title)
 
 
 """
@@ -221,7 +225,7 @@ def validation_losses_of_all_models_after_fine_tuning(classifier_histories: list
               axis.get_ylim(), label='Start Fine Tuning')
     
     axis.legend()
-    figure.suptitle(title)
+    # figure.suptitle(title)
     axis.set_xlabel('Epoch')
     axis.set_ylabel('Cross Entropy')
 
