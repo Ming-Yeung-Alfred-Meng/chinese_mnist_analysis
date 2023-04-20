@@ -184,6 +184,31 @@ def losses_after_fine_tuning(classifier_history: tf.keras.callbacks.History,
     axis.set_ylabel('Cross Entropy')
 
 
+"""
+Plot losses after fine-tuning.
+"""
+def validation_losses_of_all_models_after_fine_tuning(classifier_history: list[tf.keras.callbacks.History],
+                                                        fine_tuning_history: list[tf.keras.callbacks.History],
+                                                        curve_names: list[str],
+                                                        classifier_number_of_epoches: int,
+                                                        title: str,
+                                                        figsize: Optional[tuple[int, int]] = None) -> None:
+    figure, axis = plt.subplots(figsize=figsize)
+
+    for i in range(len(curve_names)):
+        axis.plot(classifier_history[i].history['val_loss'] + fine_tuning_history[i].history['val_loss'], label=curve_names[i])
+
+    axis.set_ylim(0, 1.0)
+
+    axis.plot([classifier_number_of_epoches - 1, classifier_number_of_epoches - 1],
+              axis.get_ylim(), label='Start Fine Tuning')
+    
+    axis.legend()
+    figure.suptitle(title)
+    axis.set_xlabel('Epoch')
+    axis.set_ylabel('Cross Entropy')
+
+
 def peek_into_dataloader(dataloader: tf.data.Dataset) -> None:
 
     class_names = dataloader.class_names
